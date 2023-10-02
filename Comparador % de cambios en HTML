@@ -1,0 +1,107 @@
+import requests
+import tkinter as tk
+from tkinter import messagebox
+from difflib import SequenceMatcher
+import os
+import datetime
+
+# Función para obtener el HTML de una URL
+def obtener_html(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener el HTML: {str(e)}")
+        return None
+
+# Función para guardar el HTML en un archivo
+def guardar_html(url, html):
+    try:
+        # Crear un directorio para almacenar los archivos si no existe
+        if not os.path.exists("html_guardados"):
+            os.makedirs("html_guardados")
+
+        # Crear un nombre de archivo único basado en la URL
+        filename = f"html_guardados/{hash(url)}.html"
+
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(html)
+
+        return filename
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo guardar el HTML: {str(e)}")
+        return None
+
+# Función para comparar dos cadenas y obtener el porcentaje de similitud
+def porcentaje_similitud(cadena1, cadena2):
+    matcher = SequenceMatcher(None, cadena1, cadena2)
+    return round(matcher.ratio() * 100, 2)
+
+# Función para manejar el botón "Guardar"
+def guardar_url():
+    url = url_entry.get()
+    html = obtener_html(url)
+    if html:
+        filename = guardar_html(url, html)
+        if filename:
+            fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            lista_urls.append((url, fecha, filename))
+            url_entry.delete(0, tk.END)
+            actualizar_lista_urls()
+
+# Función para manejar el botón "Eliminar"
+def eliminar_urls():
+    for _, _, filename in lista_urls:
+        os.remove(filename)
+    lista_urls.clear()
+    actualizar_lista_urls()
+
+# Función para manejar el botón "Comparar"
+def comparar_html():
+    if not lista_urls:
+        messagebox.showinfo("Información", "No hay URLs guardadas para comparar.")
+        return
+
+    url = url_entry.get()
+    html = obtener_html(url)
+    if html:
+        for _, _, filename in lista_urls:
+            with open(filename, "r", encoding="utf-8") as file:
+                html_guardado = file.read()
+            similitud = porcentaje_similitud(html, html_guardado)
+            messagebox.showinfo("Comparación", f"Porcentaje de similitud con {url}: {similitud}%")
+
+# Función para actualizar la lista de URLs en la interfaz
+def actualizar_lista_urls():
+    lista_urls_text.config(state=tk.NORMAL)
+    lista_urls_text.delete("1.0", tk.END)
+    for url, fecha, _ in lista_urls:
+        lista_urls_text.insert(tk.END, f"URL: {url}\nFecha de guardado: {fecha}\n\n")
+    lista_urls_text.config(state=tk.DISABLED)
+
+# Crear la ventana principal
+ventana = tk.Tk()
+ventana.title("Comparador de HTML")
+
+# Crear elementos de la interfaz
+url_label = tk.Label(ventana, text="Introduce la URL:")
+url_entry = tk.Entry(ventana, width=40)
+guardar_button = tk.Button(ventana, text="Guardar", command=guardar_url)
+eliminar_button = tk.Button(ventana, text="Eliminar", command=eliminar_urls)
+comparar_button = tk.Button(ventana, text="Comparar", command=comparar_html)
+lista_urls_text = tk.Text(ventana, height=10, width=50, state=tk.DISABLED)
+
+# Posicionar elementos en la interfaz
+url_label.pack()
+url_entry.pack()
+guardar_button.pack()
+eliminar_button.pack()
+comparar_button.pack()
+lista_urls_text.pack()
+
+# Lista para almacenar las URLs guardadas
+lista_urls = []
+
+# Iniciar la interfaz
+ventana.mainloop()
