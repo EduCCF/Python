@@ -1,5 +1,6 @@
 import difflib
 import json
+import threading
 import requests
 
 
@@ -29,12 +30,12 @@ def comparar_html():
 
 def interrupcion_programada():
     if interrupt_running:  # Verifica si la interrupción está habilitada
-        text_box.insert(tk.END, "Hola, soy una interrupción\n")  # Agrega texto al cuadro de texto
-        intervalo = int(tiempo_intervalo.get())  # Obtiene el intervalo de tiempo desde el cuadro de texto
-        timer = threading.Timer(intervalo, interrupcion_programada)  # Programa la próxima ejecución
+        #AQUI VA EL CÓDIGO A REPETIR       
+        timer = threading.Timer(tiempo_intervalo, interrupcion_programada)  # Programa la próxima ejecución
         timer.daemon = True
         timer.start()
-global interrupt_running=True
+interrupt_running=True
+tiempo_intervalo = 5 #tiempo de repetición en segundos
 data=[]    
 cargar_datos()
 comparar_html()
